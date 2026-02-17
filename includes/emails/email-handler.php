@@ -76,31 +76,46 @@ function wcbq_get_email_styles() {
 
 /**
  * ==============================================================================
- * FUNCIÓN DE ENVÍO (DISEÑO UNIFICADO)
+ * FUNCIÓN DE ENVÍO DE ACTUALIZACIONES (CLIENTE)
  * ==============================================================================
  */
 function wcbq_send_status_update_email( $quote_id, $new_status ) {
     $customer_email = get_post_meta( $quote_id, '_wcbq_customer_email', true );
-    if ( ! is_email( $customer_email ) ) { return; }
+    if ( ! is_email( $customer_email ) ) return;
 
-    // Textos según estado
-    $titles = array(
+    // 1. Textos por defecto
+    $default_titles = array(
         'quote-pending'  => 'COTIZACIÓN PENDIENTE',
         'quote-review'   => 'EN REVISIÓN',
         'quote-approved' => 'COTIZACIÓN APROBADA',
         'quote-rejected' => 'SOLICITUD RECHAZADA',
         'quote-expired'  => 'SOLICITUD EXPIRADA',
     );
-    $intros = array(
+    $default_intros = array(
         'quote-pending'  => 'El estado de tu solicitud ha cambiado a Pendiente.',
-        'quote-review'   => 'Tu solicitud está siendo revisada por nuestro equipo de eventos.',
-        'quote-approved' => 'Nos complace informarte que tu cotización ha sido aprobada. A continuación encontrarás los detalles finales y el enlace para confirmar tu reserva.',
+        'quote-review'   => 'Tu solicitud está siendo revisada por nuestro equipo.',
+        'quote-approved' => 'Nos complace informarte que tu cotización ha sido aprobada. A continuación encontrarás los detalles y el enlace para confirmar tu reserva.',
         'quote-rejected' => 'Lamentamos informarte que no podemos proceder con tu solicitud en esta fecha.',
         'quote-expired'  => 'La validez de esta propuesta ha expirado.',
     );
 
-    $title_text = isset( $titles[ $new_status ] ) ? $titles[ $new_status ] : 'ACTUALIZACIÓN DE ESTADO';
-    $intro_text = isset( $intros[ $new_status ] ) ? $intros[ $new_status ] : '';
+    // 2. Mapeo
+    $status_key_map = array(
+        'quote-pending'  => 'pending',
+        'quote-review'   => 'review',
+        'quote-approved' => 'approved',
+        'quote-rejected' => 'rejected',
+        'quote-expired'  => 'expired',
+    );
+    
+    $clean_status = isset($status_key_map[$new_status]) ? $status_key_map[$new_status] : 'pending';
+
+    // 3. Recuperar opción (Dinámico)
+    $saved_title = get_option( 'wcbq_email_' . $clean_status . '_subject' );
+    $title_text  = !empty($saved_title) ? $saved_title : (isset($default_titles[$new_status]) ? $default_titles[$new_status] : 'ACTUALIZACIÓN');
+    
+    $saved_intro = get_option( 'wcbq_email_' . $clean_status . '_intro' );
+    $intro_text  = !empty($saved_intro) ? $saved_intro : (isset($default_intros[$new_status]) ? $default_intros[$new_status] : '');
 
     // Recuperar Datos
     $product_id  = get_post_meta( $quote_id, '_quote_product_id', true );
@@ -114,9 +129,8 @@ function wcbq_send_status_update_email( $quote_id, $new_status ) {
 
     $product = wc_get_product( $product_id );
     $product_name = $product ? $product->get_name() : 'Evento';
-    $date_formatted = $start ? date_i18n( 'l, F j, Y', $start ) : '-'; // Formato elegante: Thursday, March 5, 2026
+    $date_formatted = $start ? date_i18n( 'l, F j, Y', $start ) : '-';
 
-    // Botón de Pago (Solo si aprobado)
     $cta_html = '';
     if ( $new_status === 'quote-approved' && $order_id ) {
         $order = wc_get_order( $order_id );
@@ -136,11 +150,7 @@ function wcbq_send_status_update_email( $quote_id, $new_status ) {
     $message = '
     <!DOCTYPE html>
     <html>
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <title>' . esc_html( $title_text ) . '</title>
-        <style>' . $styles . '</style>
-    </head>
+    <head><title>' . esc_html( $title_text ) . '</title><style>' . $styles . '</style></head>
     <body>
         <div class="wrapper">
             <div class="container">
@@ -150,8 +160,8 @@ function wcbq_send_status_update_email( $quote_id, $new_status ) {
                 </div>
 
                 <div class="content">
-                    <p>Estimado/a <strong>' . esc_html( $name ) . '</strong>,</p>
-                    <p>' . esc_html( $intro_text ) . '</p>
+                    <p>Hello <strong>' . esc_html( $name ) . '</strong>,</p>
+                    <p>' . nl2br( esc_html( $intro_text ) ) . '</p>
 
                     <h2>INFORMACIÓN DEL CLIENTE</h2>
                     <table>
@@ -177,16 +187,11 @@ function wcbq_send_status_update_email( $quote_id, $new_status ) {
 
                     ' . $cta_html . '
                 </div>
-
-                <div class="footer">
-                    <p>&copy; ' . date('Y') . ' ' . get_bloginfo( 'name' ) . '. Todos los derechos reservados.</p>
-                    <p>Este es un correo automático generado por el sistema.</p>
-                </div>
+                <div class="footer"><p>&copy; ' . date('Y') . ' ' . get_bloginfo( 'name' ) . '.</p></div>
             </div>
         </div>
     </body>
-    </html>
-    ';
+    </html>';
 
     $subject = $title_text . ' - #' . $quote_id;
     $headers = array( 'Content-Type: text/html; charset=UTF-8' );
@@ -200,7 +205,15 @@ function wcbq_send_status_update_email( $quote_id, $new_status ) {
  */
 function wcbq_notify_admin_new_quote( $quote_id ) {
     $to = 'darwinmichaelroamora@gmail.com'; 
-    $subject = 'NUEVA SOLICITUD DE COTIZACIÓN - #' . $quote_id;
+    
+    // 🟢 AQUÍ ESTÁ LA CORRECCIÓN: Conectando con los Ajustes
+    $saved_subject = get_option( 'wcbq_email_admin_subject' );
+    $subject_base  = !empty($saved_subject) ? $saved_subject : 'NUEVA SOLICITUD DE COTIZACIÓN';
+    $subject       = $subject_base . ' - #' . $quote_id;
+
+    $saved_heading = get_option( 'wcbq_email_admin_heading' );
+    $heading       = !empty($saved_heading) ? $saved_heading : 'NUEVA SOLICITUD';
+    // ------------------------------------------------------
 
     // Recuperar Datos
     $name       = get_post_meta( $quote_id, '_wcbq_customer_name', true );
@@ -228,12 +241,12 @@ function wcbq_notify_admin_new_quote( $quote_id ) {
         <div class="wrapper">
             <div class="container">
                 <div class="header">
-                    <h1>NUEVA SOLICITUD</h1>
+                    <h1>' . esc_html( $heading ) . '</h1>
                     <div class="date">' . $current_date . '</div>
                 </div>
                 <div class="content">
-                    <p>Hola Admin,</p>
-                    <p>Se ha recibido una nueva solicitud desde la web. Por favor revisa los detalles a continuación.</p>
+                    <p>Hello Admin,</p>
+                    <p>A new inquiry has been submitted through the website. Please find the details for your review below.</p>
 
                     <h2>INFORMACIÓN DEL CLIENTE</h2>
                     <table>
@@ -270,12 +283,24 @@ function wcbq_notify_admin_new_quote( $quote_id ) {
 
 /**
  * ==============================================================================
- * CORREO 2: CONFIRMACIÓN INICIAL AL CLIENTE
+ * CORREO 2: CONFIRMACIÓN INICIAL AL CLIENTE (DINÁMICO)
  * ==============================================================================
  */
 function wcbq_notify_customer_new_quote( $quote_id ) {
     $customer_email = get_post_meta( $quote_id, '_wcbq_customer_email', true );
     if ( ! is_email( $customer_email ) ) return;
+
+    // --- SETTINGS ---
+    $saved_subject = get_option( 'wcbq_email_customer_received_subject' );
+    $subject_base  = !empty($saved_subject) ? $saved_subject : 'SOLICITUD RECIBIDA';
+    $subject       = $subject_base . ' - #' . $quote_id;
+    
+    $saved_heading = get_option( 'wcbq_email_customer_received_heading' );
+    $heading       = !empty($saved_heading) ? $saved_heading : 'SOLICITUD RECIBIDA';
+
+    $saved_intro = get_option( 'wcbq_email_customer_received_intro' );
+    $intro       = !empty($saved_intro) ? $saved_intro : 'Gracias por contactarnos. Hemos recibido tu solicitud correctamente y nuestro equipo la revisará a la brevedad.';
+    // ----------------
 
     $name       = get_post_meta( $quote_id, '_wcbq_customer_name', true );
     $product_id = get_post_meta( $quote_id, '_quote_product_id', true );
@@ -298,12 +323,12 @@ function wcbq_notify_customer_new_quote( $quote_id ) {
         <div class="wrapper">
             <div class="container">
                 <div class="header">
-                    <h1>SOLICITUD RECIBIDA</h1>
+                    <h1>' . esc_html( $heading ) . '</h1>
                     <div class="date">' . $current_date . '</div>
                 </div>
                 <div class="content">
-                    <p>Hola <strong>' . esc_html( $name ) . '</strong>,</p>
-                    <p>Gracias por contactarnos. Hemos recibido tu solicitud correctamente y nuestro equipo la revisará a la brevedad.</p>
+                    <p>Hello <strong>' . esc_html( $name ) . '</strong>,</p>
+                    <p>' . nl2br( esc_html( $intro ) ) . '</p>
 
                     <h2>RESUMEN DE TU SOLICITUD</h2>
                     <table>
@@ -324,7 +349,6 @@ function wcbq_notify_customer_new_quote( $quote_id ) {
     </body>
     </html>';
 
-    $subject = '✦ SOLICITUD RECIBIDA - #' . $quote_id;
     $headers = array( 'Content-Type: text/html; charset=UTF-8' );
     wp_mail( $customer_email, $subject, $message, $headers );
 }

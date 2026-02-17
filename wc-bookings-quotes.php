@@ -54,6 +54,7 @@ function wcbq_init_plugin() {
     require_once WCBQ_PLUGIN_PATH . 'includes/post-types/quote-cpt.php';
     require_once WCBQ_PLUGIN_PATH . 'includes/frontend/quote-form.php';
     require_once WCBQ_PLUGIN_PATH . 'includes/frontend/quote-handler.php';
+    require_once WCBQ_PLUGIN_PATH . 'includes/admin/quote-settings.php';
     require_once WCBQ_PLUGIN_PATH . 'includes/admin/quote-admin.php';
     require_once WCBQ_PLUGIN_PATH . 'includes/orders/order-handler.php';
     require_once WCBQ_PLUGIN_PATH . 'includes/emails/email-handler.php';
