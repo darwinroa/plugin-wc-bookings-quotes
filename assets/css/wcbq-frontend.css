@@ -15,11 +15,20 @@
     position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #999;
 }
 .wcbq-summary-box {
-    background: #eef2f7; padding: 10px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #3c85f5;
+    background: #eef2f7; padding: 10px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #BF9B30;
 }
 .wcbq-form-group { margin-bottom: 12px; text-align: left; }
 .wcbq-form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.9em; }
-.wcbq-form-group input, .wcbq-form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+.wcbq-form-group input, .wcbq-form-group textarea { 
+    width: 100%; 
+    padding: 8px; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+
+    &:focus-visible {
+        outline-color: #BF9B30;
+    }
+}
 
 /* Estilos botón deshabilitado vs habilitado */
 .wcbq-btn-disabled { background-color: #ccc !important; color: #666 !important; pointer-events: none; }
