@@ -26,6 +26,7 @@ add_action( 'admin_init', 'wcbq_register_settings' );
 
 function wcbq_register_settings() {
     // Group: Admin Notifications
+    register_setting( 'wcbq_email_options', 'wcbq_email_admin_recipients' );
     register_setting( 'wcbq_email_options', 'wcbq_email_admin_subject' );
     register_setting( 'wcbq_email_options', 'wcbq_email_admin_heading' );
 
@@ -58,6 +59,13 @@ function wcbq_render_settings_page() {
             <hr>
             <h2><?php esc_html_e( '1. Admin Notification (New Request)', 'wc-bookings-quotes' ); ?></h2>
             <table class="form-table">
+                <tr>
+                    <th scope="row"><?php esc_html_e( 'Recipient Emails', 'wc-bookings-quotes' ); ?></th>
+                    <td>
+                        <input type="text" name="wcbq_email_admin_recipients" value="<?php echo esc_attr( get_option('wcbq_email_admin_recipients') ); ?>" class="large-text" placeholder="admin@example.com, sales@example.com">
+                        <p class="description"><?php esc_html_e( 'Enter email addresses separated by commas. If empty, the WordPress admin email will be used.', 'wc-bookings-quotes' ); ?></p>
+                    </td>
+                </tr>
                 <tr>
                     <th scope="row"><?php esc_html_e( 'Email Subject', 'wc-bookings-quotes' ); ?></th>
                     <td><input type="text" name="wcbq_email_admin_subject" value="<?php echo esc_attr( get_option('wcbq_email_admin_subject') ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Default: ✦ NEW QUOTE REQUEST', 'wc-bookings-quotes' ); ?>"></td>

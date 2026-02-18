@@ -205,7 +205,17 @@ function wcbq_send_status_update_email( $quote_id, $new_status ) {
  * ==============================================================================
  */
 function wcbq_notify_admin_new_quote( $quote_id ) {
-    $to = 'darwinmichaelroamora@gmail.com'; 
+    // 🟢 GESTIÓN DE DESTINATARIOS MÚLTIPLES
+    $saved_recipients = get_option( 'wcbq_email_admin_recipients' );
+    
+    if ( ! empty( $saved_recipients ) ) {
+        // Convertir string "a@a.com, b@b.com" en array
+        $to = array_map( 'trim', explode( ',', $saved_recipients ) );
+    } else {
+        // Fallback: Email general de WordPress
+        $to = get_option( 'admin_email' );
+    }
+    // -----------------------------------------------------
     
     // Configuración con i18n
     $saved_subject = get_option( 'wcbq_email_admin_subject' );
