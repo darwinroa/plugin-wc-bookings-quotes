@@ -64,3 +64,25 @@ function wcbq_init_plugin() {
     require_once WCBQ_PLUGIN_PATH . 'includes/helpers/quote-helpers.php';
 }
 add_action( 'plugins_loaded', 'wcbq_init_plugin' );
+
+/**
+ * Encolar Estilos CSS del Frontend
+ */
+add_action( 'wp_enqueue_scripts', 'wcbq_enqueue_frontend_styles' );
+
+function wcbq_enqueue_frontend_styles() {
+    // Solo cargamos si es producto booking para optimizar
+    if ( is_product() ) {
+        global $post;
+        $product = wc_get_product( $post->ID );
+        
+        if ( $product && $product->is_type( 'booking' ) ) {
+            wp_enqueue_style( 
+                'wcbq-frontend-css', 
+                plugin_dir_url( __FILE__ ) . 'assets/css/wcbq-frontend.css', 
+                array(), 
+                '1.0' 
+            );
+        }
+    }
+}

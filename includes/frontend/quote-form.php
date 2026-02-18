@@ -74,39 +74,6 @@ function wcbq_render_quote_button_and_modal() {
         </div>
     </div>
 
-    <style>
-        .wcbq-modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 99999;
-            display: flex; justify-content: center; align-items: center;
-        }
-        .wcbq-modal-content {
-            background: #fff; padding: 25px; border-radius: 8px;
-            width: 90%; max-width: 500px; position: relative;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            max-height: 90vh; overflow-y: auto;
-        }
-        .wcbq-close {
-            position: absolute; top: 10px; right: 15px; font-size: 24px; cursor: pointer; color: #999;
-        }
-        .wcbq-summary-box {
-            background: #eef2f7; padding: 10px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #3c85f5;
-        }
-        .wcbq-form-group { margin-bottom: 12px; text-align: left; }
-        .wcbq-form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.9em; }
-        .wcbq-form-group input, .wcbq-form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        
-        /* Disabled vs Enabled button styles */
-        .wcbq-btn-disabled { background-color: #ccc !important; color: #666 !important; pointer-events: none; }
-        .wcbq-btn-ready { background-color: #333 !important; color: #fff !important; cursor: pointer !important; animation: pulse 2s infinite; }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2); }
-            70% { box-shadow: 0 0 0 10px rgba(0, 0, 0, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
-        }
-    </style>
-
     <script type="text/javascript">
     jQuery(document).ready(function($) {
         
