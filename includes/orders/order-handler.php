@@ -4,28 +4,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Escuchar el cambio de estado de la cotización y crear Orden + Reserva
- * IMPORTANTE: Prioridad 50 para asegurar que los datos del Admin ya se guardaron.
+ * Listen for quote status change and create Order + Booking
+ * IMPORTANT: Priority 50 to ensure Admin data is already saved.
  */
 add_action( 'transition_post_status', 'wcbq_create_order_and_booking_on_approval', 50, 3 );
 
 function wcbq_create_order_and_booking_on_approval( $new_status, $old_status, $post ) {
 
-    // 1. Validaciones
+    // 1. Validations
     if ( 'quote_request' !== $post->post_type ) { return; }
     if ( 'quote-approved' !== $new_status ) { return; }
 
     $existing_order_id = get_post_meta( $post->ID, '_quote_order_id', true );
     if ( $existing_order_id ) { return; }
 
-    // 2. Recuperar Datos
+    // 2. Retrieve Data
     $product_id = get_post_meta( $post->ID, '_quote_product_id', true );
     $price      = get_post_meta( $post->ID, '_quote_price', true );
     $start      = intval( get_post_meta( $post->ID, '_quote_booking_start', true ) );
     $end        = intval( get_post_meta( $post->ID, '_quote_booking_end', true ) );
     $persons    = intval( get_post_meta( $post->ID, '_quote_people', true ) );
     
-    // Recuperar Notas Admin
+    // Retrieve Admin Notes
     $admin_notes = get_post_meta( $post->ID, '_quote_admin_notes', true );
     if ( empty( $admin_notes ) && isset( $_POST['_quote_admin_notes'] ) ) {
         $admin_notes = sanitize_textarea_field( $_POST['_quote_admin_notes'] );
@@ -34,10 +34,10 @@ function wcbq_create_order_and_booking_on_approval( $new_status, $old_status, $p
 
     $customer_notes = get_post_meta( $post->ID, '_quote_customer_notes', true );
     
-    // Datos del Cliente
+    // Customer Data
     $email      = get_post_meta( $post->ID, '_wcbq_customer_email', true );
     $name       = get_post_meta( $post->ID, '_wcbq_customer_name', true );
-    $phone      = get_post_meta( $post->ID, '_wcbq_customer_phone', true ); // 🟢 NUEVO: Recuperamos el teléfono
+    $phone      = get_post_meta( $post->ID, '_wcbq_customer_phone', true ); // 🟢 NEW: Retrieve phone
     
     $persons_breakdown = get_post_meta( $post->ID, '_quote_people_breakdown', true );
     $raw_data   = get_post_meta( $post->ID, '_quote_raw_data', true );
@@ -47,7 +47,7 @@ function wcbq_create_order_and_booking_on_approval( $new_status, $old_status, $p
     $product = wc_get_product( $product_id );
     if ( ! $product ) { return; }
 
-    // 3. Crear la Orden
+    // 3. Create the Order
     $order_args = array();
     $customer_id = 0;
 
@@ -62,36 +62,36 @@ function wcbq_create_order_and_booking_on_approval( $new_status, $old_status, $p
     $order = wc_create_order( $order_args );
 
     if ( is_wp_error( $order ) ) {
-        error_log( 'Error creando orden para cotización ' . $post->ID );
+        error_log( 'WCBQ Error: Error creating order for quote ' . $post->ID );
         return;
     }
 
-    // 4. Agregar Producto
+    // 4. Add Product
     $item_id = $order->add_product( $product, 1, array(
         'subtotal' => $price,
         'total'    => $price,
     ) );
 
-    // 5. Inyectar Datos Visuales (Item Metadata)
+    // 5. Inject Visual Data (Item Metadata)
     $item = $order->get_item( $item_id );
     if ( $item ) {
         if ( $persons > 0 ) {
-            $item->add_meta_data( 'Personas', $persons, true );
+            $item->add_meta_data( __( 'People', 'wc-bookings-quotes' ), $persons, true );
         }
-        $item->add_meta_data( 'Fecha', date_i18n( get_option( 'date_format' ), $start ), true );
+        $item->add_meta_data( __( 'Date', 'wc-bookings-quotes' ), date_i18n( get_option( 'date_format' ), $start ), true );
 
         if ( ! empty( $customer_notes ) ) {
-            $item->add_meta_data( '📝 Nota Cliente', substr($customer_notes, 0, 200) . (strlen($customer_notes)>200?'...':''), true );
+            $item->add_meta_data( __( '📝 Client Note', 'wc-bookings-quotes' ), substr($customer_notes, 0, 200) . (strlen($customer_notes)>200?'...':''), true );
         }
 
         if ( ! empty( $admin_notes ) ) {
-            $item->add_meta_data( '📒 Acuerdo Final', $admin_notes, true );
+            $item->add_meta_data( __( '📒 Final Agreement', 'wc-bookings-quotes' ), $admin_notes, true );
         }
         
         $item->save();
     }
 
-    // 6. Crear Reserva
+    // 6. Create Booking
     try {
         $new_booking = new WC_Booking();
 
@@ -136,11 +136,11 @@ function wcbq_create_order_and_booking_on_approval( $new_status, $old_status, $p
         wc_add_order_item_meta( $item_id, '_booking_id', $new_booking->get_id() );
 
     } catch ( Exception $e ) {
-        error_log( 'Error creando reserva real: ' . $e->getMessage() );
-        $order->add_order_note( 'Error creando reserva: ' . $e->getMessage() );
+        error_log( 'WCBQ Error creating actual booking: ' . $e->getMessage() );
+        $order->add_order_note( __( 'Error creating booking: ', 'wc-bookings-quotes' ) . $e->getMessage() );
     }
 
-    // 7. Datos Facturación (CON TELÉFONO INCLUIDO)
+    // 7. Billing Data (WITH PHONE INCLUDED)
     if ( $name ) {
         $parts = explode( ' ', $name, 2 );
         $first_name = $parts[0];
@@ -152,7 +152,7 @@ function wcbq_create_order_and_booking_on_approval( $new_status, $old_status, $p
             'first_name' => $first_name,
             'last_name'  => $last_name,
             'email'      => $email,
-            'phone'      => $phone, // 🟢 AQUI LO AGREGAMOS
+            'phone'      => $phone, // 🟢 ADDED HERE
             'country'    => $base_country,
             'state'      => $base_state,
         );
@@ -160,13 +160,13 @@ function wcbq_create_order_and_booking_on_approval( $new_status, $old_status, $p
         $order->set_address( $address, 'shipping' );
     }
 
-    // Agregar notas laterales
+    // Add side notes
     if ( ! empty( $admin_notes ) ) {
-        $order->add_order_note( '📒 ACUERDO FINAL: ' . $admin_notes );
+        $order->add_order_note( __( '📒 FINAL AGREEMENT: ', 'wc-bookings-quotes' ) . $admin_notes );
     }
 
     $order->calculate_totals();
-    $order->update_status( 'pending', 'Orden generada desde Cotización.' );
+    $order->update_status( 'pending', __( 'Order generated from Quote.', 'wc-bookings-quotes' ) );
     
     update_post_meta( $post->ID, '_quote_order_id', $order->get_id() );
     if ( isset( $new_booking ) && $new_booking->get_id() ) {

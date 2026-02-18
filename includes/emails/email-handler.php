@@ -28,12 +28,11 @@ function wcbq_trigger_email_on_status_change( $new_status, $old_status, $post ) 
  * ==============================================================================
  */
 function wcbq_get_email_styles() {
-    // Colores basados en la imagen de referencia (Negro elegante y Dorado/Beige)
     $color_bg       = '#f4f4f4';
     $color_container= '#ffffff';
     $color_text     = '#333333';
-    $color_accent   = '#c5a065'; // Dorado suave estilo "Cake"
-    $color_header   = '#1a1a1a'; // Negro casi puro
+    $color_accent   = '#c5a065';
+    $color_header   = '#1a1a1a';
     $font_family    = 'Georgia, "Times New Roman", Times, serif';
     $font_sans      = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 
@@ -83,20 +82,22 @@ function wcbq_send_status_update_email( $quote_id, $new_status ) {
     $customer_email = get_post_meta( $quote_id, '_wcbq_customer_email', true );
     if ( ! is_email( $customer_email ) ) return;
 
-    // 1. Textos por defecto
+    $text_domain = 'wc-bookings-quotes';
+
+    // 1. Textos por defecto (EN INGLÉS + i18n)
     $default_titles = array(
-        'quote-pending'  => 'COTIZACIÓN PENDIENTE',
-        'quote-review'   => 'EN REVISIÓN',
-        'quote-approved' => 'COTIZACIÓN APROBADA',
-        'quote-rejected' => 'SOLICITUD RECHAZADA',
-        'quote-expired'  => 'SOLICITUD EXPIRADA',
+        'quote-pending'  => __( 'PENDING QUOTE', 'wc-bookings-quotes' ),
+        'quote-review'   => __( 'UNDER REVIEW', 'wc-bookings-quotes' ),
+        'quote-approved' => __( 'QUOTE APPROVED', 'wc-bookings-quotes' ),
+        'quote-rejected' => __( 'REQUEST REJECTED', 'wc-bookings-quotes' ),
+        'quote-expired'  => __( 'REQUEST EXPIRED', 'wc-bookings-quotes' ),
     );
     $default_intros = array(
-        'quote-pending'  => 'El estado de tu solicitud ha cambiado a Pendiente.',
-        'quote-review'   => 'Tu solicitud está siendo revisada por nuestro equipo.',
-        'quote-approved' => 'Nos complace informarte que tu cotización ha sido aprobada. A continuación encontrarás los detalles y el enlace para confirmar tu reserva.',
-        'quote-rejected' => 'Lamentamos informarte que no podemos proceder con tu solicitud en esta fecha.',
-        'quote-expired'  => 'La validez de esta propuesta ha expirado.',
+        'quote-pending'  => __( 'Your request status has changed to Pending.', 'wc-bookings-quotes' ),
+        'quote-review'   => __( 'Your request is being reviewed by our team.', 'wc-bookings-quotes' ),
+        'quote-approved' => __( 'We are pleased to inform you that your quote has been approved. Below you will find the final details and the link to confirm your booking.', 'wc-bookings-quotes' ),
+        'quote-rejected' => __( 'We regret to inform you that we cannot proceed with your request at this time.', 'wc-bookings-quotes' ),
+        'quote-expired'  => __( 'The validity of this proposal has expired.', 'wc-bookings-quotes' ),
     );
 
     // 2. Mapeo
@@ -112,7 +113,7 @@ function wcbq_send_status_update_email( $quote_id, $new_status ) {
 
     // 3. Recuperar opción (Dinámico)
     $saved_title = get_option( 'wcbq_email_' . $clean_status . '_subject' );
-    $title_text  = !empty($saved_title) ? $saved_title : (isset($default_titles[$new_status]) ? $default_titles[$new_status] : 'ACTUALIZACIÓN');
+    $title_text  = !empty($saved_title) ? $saved_title : (isset($default_titles[$new_status]) ? $default_titles[$new_status] : __( 'UPDATE', 'wc-bookings-quotes' ));
     
     $saved_intro = get_option( 'wcbq_email_' . $clean_status . '_intro' );
     $intro_text  = !empty($saved_intro) ? $saved_intro : (isset($default_intros[$new_status]) ? $default_intros[$new_status] : '');
@@ -128,7 +129,7 @@ function wcbq_send_status_update_email( $quote_id, $new_status ) {
     $order_id    = get_post_meta( $quote_id, '_quote_order_id', true );
 
     $product = wc_get_product( $product_id );
-    $product_name = $product ? $product->get_name() : 'Evento';
+    $product_name = $product ? $product->get_name() : __( 'Event', 'wc-bookings-quotes' );
     $date_formatted = $start ? date_i18n( 'l, F j, Y', $start ) : '-';
 
     $cta_html = '';
@@ -138,8 +139,8 @@ function wcbq_send_status_update_email( $quote_id, $new_status ) {
             $pay_url = $order->get_checkout_payment_url();
             $cta_html = '
             <div class="btn-container">
-                <a href="' . esc_url( $pay_url ) . '" class="btn">CONFIRMAR Y PAGAR</a>
-                <p style="font-size:11px; margin-top:10px; color:#999;">Serás redirigido a nuestra pasarela segura</p>
+                <a href="' . esc_url( $pay_url ) . '" class="btn">' . esc_html__( 'CONFIRM AND PAY', 'wc-bookings-quotes' ) . '</a>
+                <p style="font-size:11px; margin-top:10px; color:#999;">' . esc_html__( 'You will be redirected to our secure payment gateway', 'wc-bookings-quotes' ) . '</p>
             </div>';
         }
     }
@@ -160,30 +161,30 @@ function wcbq_send_status_update_email( $quote_id, $new_status ) {
                 </div>
 
                 <div class="content">
-                    <p>Hello <strong>' . esc_html( $name ) . '</strong>,</p>
+                    <p>' . sprintf( esc_html__( 'Dear %s,', 'wc-bookings-quotes' ), '<strong>' . esc_html( $name ) . '</strong>' ) . '</p>
                     <p>' . nl2br( esc_html( $intro_text ) ) . '</p>
 
-                    <h2>INFORMACIÓN DEL CLIENTE</h2>
+                    <h2>' . esc_html__( 'CLIENT INFORMATION', 'wc-bookings-quotes' ) . '</h2>
                     <table>
-                        <tr><td class="label">Nombre</td><td class="value">' . esc_html( $name ) . '</td></tr>
-                        <tr><td class="label">Email</td><td class="value">' . esc_html( $customer_email ) . '</td></tr>
+                        <tr><td class="label">' . esc_html__( 'Name', 'wc-bookings-quotes' ) . '</td><td class="value">' . esc_html( $name ) . '</td></tr>
+                        <tr><td class="label">' . esc_html__( 'Email', 'wc-bookings-quotes' ) . '</td><td class="value">' . esc_html( $customer_email ) . '</td></tr>
                     </table>
 
-                    <h2>RESUMEN DEL EVENTO</h2>
+                    <h2>' . esc_html__( 'EVENT SUMMARY', 'wc-bookings-quotes' ) . '</h2>
                     <div class="price-box">
-                        <div class="price-label">COTIZACIÓN ESTIMADA</div>
+                        <div class="price-label">' . esc_html__( 'ESTIMATED QUOTE', 'wc-bookings-quotes' ) . '</div>
                         <div class="price-value">' . strip_tags( wc_price( $price ) ) . '</div>
                     </div>
 
                     <table>
-                        <tr><td class="label">Servicio</td><td class="value"><strong>' . esc_html( $product_name ) . '</strong></td></tr>
-                        <tr><td class="label">Fecha</td><td class="value">' . esc_html( $date_formatted ) . '</td></tr>
-                        <tr><td class="label">Invitados</td><td class="value">' . esc_html( $people ) . ' personas</td></tr>
+                        <tr><td class="label">' . esc_html__( 'Service', 'wc-bookings-quotes' ) . '</td><td class="value"><strong>' . esc_html( $product_name ) . '</strong></td></tr>
+                        <tr><td class="label">' . esc_html__( 'Date', 'wc-bookings-quotes' ) . '</td><td class="value">' . esc_html( $date_formatted ) . '</td></tr>
+                        <tr><td class="label">' . esc_html__( 'Guests', 'wc-bookings-quotes' ) . '</td><td class="value">' . esc_html( $people ) . ' ' . esc_html__( 'people', 'wc-bookings-quotes' ) . '</td></tr>
                     </table>
 
-                    ' . ( $notes ? '<h2>SOLICITUDES ADICIONALES</h2><div class="note-box">' . nl2br( esc_html( $notes ) ) . '</div>' : '' ) . '
+                    ' . ( $notes ? '<h2>' . esc_html__( 'ADDITIONAL REQUESTS', 'wc-bookings-quotes' ) . '</h2><div class="note-box">' . nl2br( esc_html( $notes ) ) . '</div>' : '' ) . '
                     
-                    ' . ( $admin_notes ? '<h2>NOTAS DEL ACUERDO</h2><div class="note-box" style="border-left-color:#333;">' . nl2br( esc_html( $admin_notes ) ) . '</div>' : '' ) . '
+                    ' . ( $admin_notes ? '<h2>' . esc_html__( 'AGREEMENT NOTES', 'wc-bookings-quotes' ) . '</h2><div class="note-box" style="border-left-color:#333;">' . nl2br( esc_html( $admin_notes ) ) . '</div>' : '' ) . '
 
                     ' . $cta_html . '
                 </div>
@@ -206,14 +207,13 @@ function wcbq_send_status_update_email( $quote_id, $new_status ) {
 function wcbq_notify_admin_new_quote( $quote_id ) {
     $to = 'darwinmichaelroamora@gmail.com'; 
     
-    // 🟢 AQUÍ ESTÁ LA CORRECCIÓN: Conectando con los Ajustes
+    // Configuración con i18n
     $saved_subject = get_option( 'wcbq_email_admin_subject' );
-    $subject_base  = !empty($saved_subject) ? $saved_subject : 'NUEVA SOLICITUD DE COTIZACIÓN';
+    $subject_base  = !empty($saved_subject) ? $saved_subject : __( 'NEW QUOTE REQUEST', 'wc-bookings-quotes' );
     $subject       = $subject_base . ' - #' . $quote_id;
 
     $saved_heading = get_option( 'wcbq_email_admin_heading' );
-    $heading       = !empty($saved_heading) ? $saved_heading : 'NUEVA SOLICITUD';
-    // ------------------------------------------------------
+    $heading       = !empty($saved_heading) ? $saved_heading : __( 'NEW REQUEST', 'wc-bookings-quotes' );
 
     // Recuperar Datos
     $name       = get_post_meta( $quote_id, '_wcbq_customer_name', true );
@@ -226,7 +226,7 @@ function wcbq_notify_admin_new_quote( $quote_id ) {
     $notes      = get_post_meta( $quote_id, '_quote_customer_notes', true );
     
     $product = wc_get_product( $product_id );
-    $product_name = $product ? $product->get_name() : 'Evento';
+    $product_name = $product ? $product->get_name() : __( 'Event', 'wc-bookings-quotes' );
     $date_formatted = $start ? date_i18n( 'l, F j, Y', $start ) : '-';
     $edit_link = admin_url( 'post.php?post=' . $quote_id . '&action=edit' );
     
@@ -245,31 +245,31 @@ function wcbq_notify_admin_new_quote( $quote_id ) {
                     <div class="date">' . $current_date . '</div>
                 </div>
                 <div class="content">
-                    <p>Hello Admin,</p>
-                    <p>A new inquiry has been submitted through the website. Please find the details for your review below.</p>
+                    <p>' . esc_html__( 'Hello Admin,', 'wc-bookings-quotes' ) . '</p>
+                    <p>' . esc_html__( 'A new inquiry has been submitted through the website. Please find the details for your review below.', 'wc-bookings-quotes' ) . '</p>
 
-                    <h2>INFORMACIÓN DEL CLIENTE</h2>
+                    <h2>' . esc_html__( 'CLIENT INFORMATION', 'wc-bookings-quotes' ) . '</h2>
                     <table>
-                        <tr><td class="label">Nombre</td><td class="value">' . esc_html( $name ) . '</td></tr>
-                        <tr><td class="label">Email</td><td class="value"><a href="mailto:' . esc_attr($email) . '">' . esc_html( $email ) . '</a></td></tr>
-                        <tr><td class="label">Teléfono</td><td class="value">' . esc_html( $phone ) . '</td></tr>
+                        <tr><td class="label">' . esc_html__( 'Name', 'wc-bookings-quotes' ) . '</td><td class="value">' . esc_html( $name ) . '</td></tr>
+                        <tr><td class="label">' . esc_html__( 'Email', 'wc-bookings-quotes' ) . '</td><td class="value"><a href="mailto:' . esc_attr($email) . '">' . esc_html( $email ) . '</a></td></tr>
+                        <tr><td class="label">' . esc_html__( 'Phone', 'wc-bookings-quotes' ) . '</td><td class="value">' . esc_html( $phone ) . '</td></tr>
                     </table>
 
-                    <h2>DETALLES DEL EVENTO</h2>
+                    <h2>' . esc_html__( 'EVENT DETAILS', 'wc-bookings-quotes' ) . '</h2>
                      <div class="price-box">
-                        <div class="price-label">PRESUPUESTO INICIAL</div>
+                        <div class="price-label">' . esc_html__( 'INITIAL BUDGET', 'wc-bookings-quotes' ) . '</div>
                         <div class="price-value">' . strip_tags( wc_price( $price ) ) . '</div>
                     </div>
                     <table>
-                        <tr><td class="label">Servicio</td><td class="value"><strong>' . esc_html( $product_name ) . '</strong></td></tr>
-                        <tr><td class="label">Fecha</td><td class="value">' . esc_html( $date_formatted ) . '</td></tr>
-                        <tr><td class="label">Invitados</td><td class="value">' . esc_html( $people ) . ' personas</td></tr>
+                        <tr><td class="label">' . esc_html__( 'Service', 'wc-bookings-quotes' ) . '</td><td class="value"><strong>' . esc_html( $product_name ) . '</strong></td></tr>
+                        <tr><td class="label">' . esc_html__( 'Date', 'wc-bookings-quotes' ) . '</td><td class="value">' . esc_html( $date_formatted ) . '</td></tr>
+                        <tr><td class="label">' . esc_html__( 'Guests', 'wc-bookings-quotes' ) . '</td><td class="value">' . esc_html( $people ) . ' ' . esc_html__( 'people', 'wc-bookings-quotes' ) . '</td></tr>
                     </table>
 
-                    ' . ( $notes ? '<h2>MENSAJE DEL CLIENTE</h2><div class="note-box">' . nl2br( esc_html( $notes ) ) . '</div>' : '' ) . '
+                    ' . ( $notes ? '<h2>' . esc_html__( 'CLIENT MESSAGE', 'wc-bookings-quotes' ) . '</h2><div class="note-box">' . nl2br( esc_html( $notes ) ) . '</div>' : '' ) . '
                     
                     <div class="btn-container">
-                        <a href="' . esc_url( $edit_link ) . '" class="btn">GESTIONAR EN WORDPRESS</a>
+                        <a href="' . esc_url( $edit_link ) . '" class="btn">' . esc_html__( 'MANAGE IN WORDPRESS', 'wc-bookings-quotes' ) . '</a>
                     </div>
                 </div>
             </div>
@@ -292,14 +292,14 @@ function wcbq_notify_customer_new_quote( $quote_id ) {
 
     // --- SETTINGS ---
     $saved_subject = get_option( 'wcbq_email_customer_received_subject' );
-    $subject_base  = !empty($saved_subject) ? $saved_subject : 'SOLICITUD RECIBIDA';
+    $subject_base  = !empty($saved_subject) ? $saved_subject : __( 'QUOTE REQUEST RECEIVED', 'wc-bookings-quotes' );
     $subject       = $subject_base . ' - #' . $quote_id;
     
     $saved_heading = get_option( 'wcbq_email_customer_received_heading' );
-    $heading       = !empty($saved_heading) ? $saved_heading : 'SOLICITUD RECIBIDA';
+    $heading       = !empty($saved_heading) ? $saved_heading : __( 'REQUEST RECEIVED', 'wc-bookings-quotes' );
 
     $saved_intro = get_option( 'wcbq_email_customer_received_intro' );
-    $intro       = !empty($saved_intro) ? $saved_intro : 'Gracias por contactarnos. Hemos recibido tu solicitud correctamente y nuestro equipo la revisará a la brevedad.';
+    $intro       = !empty($saved_intro) ? $saved_intro : __( 'Thank you for contacting us. We have successfully received your request and our team will review it shortly.', 'wc-bookings-quotes' );
     // ----------------
 
     $name       = get_post_meta( $quote_id, '_wcbq_customer_name', true );
@@ -309,7 +309,7 @@ function wcbq_notify_customer_new_quote( $quote_id ) {
     $notes      = get_post_meta( $quote_id, '_quote_customer_notes', true );
     
     $product = wc_get_product( $product_id );
-    $product_name = $product ? $product->get_name() : 'Evento';
+    $product_name = $product ? $product->get_name() : __( 'Event', 'wc-bookings-quotes' );
     $date_formatted = $start ? date_i18n( 'l, F j, Y', $start ) : '-';
 
     $styles = wcbq_get_email_styles();
@@ -327,19 +327,19 @@ function wcbq_notify_customer_new_quote( $quote_id ) {
                     <div class="date">' . $current_date . '</div>
                 </div>
                 <div class="content">
-                    <p>Hello <strong>' . esc_html( $name ) . '</strong>,</p>
+                    <p>' . sprintf( esc_html__( 'Hello %s,', 'wc-bookings-quotes' ), '<strong>' . esc_html( $name ) . '</strong>' ) . '</p>
                     <p>' . nl2br( esc_html( $intro ) ) . '</p>
 
-                    <h2>RESUMEN DE TU SOLICITUD</h2>
+                    <h2>' . esc_html__( 'REQUEST SUMMARY', 'wc-bookings-quotes' ) . '</h2>
                     <table>
-                        <tr><td class="label">Servicio</td><td class="value"><strong>' . esc_html( $product_name ) . '</strong></td></tr>
-                        <tr><td class="label">Fecha</td><td class="value">' . esc_html( $date_formatted ) . '</td></tr>
-                        <tr><td class="label">Invitados</td><td class="value">' . esc_html( $people ) . ' personas</td></tr>
+                        <tr><td class="label">' . esc_html__( 'Service', 'wc-bookings-quotes' ) . '</td><td class="value"><strong>' . esc_html( $product_name ) . '</strong></td></tr>
+                        <tr><td class="label">' . esc_html__( 'Date', 'wc-bookings-quotes' ) . '</td><td class="value">' . esc_html( $date_formatted ) . '</td></tr>
+                        <tr><td class="label">' . esc_html__( 'Guests', 'wc-bookings-quotes' ) . '</td><td class="value">' . esc_html( $people ) . ' ' . esc_html__( 'people', 'wc-bookings-quotes' ) . '</td></tr>
                     </table>
 
-                    ' . ( $notes ? '<h2>TUS COMENTARIOS</h2><div class="note-box">' . nl2br( esc_html( $notes ) ) . '</div>' : '' ) . '
+                    ' . ( $notes ? '<h2>' . esc_html__( 'YOUR COMMENTS', 'wc-bookings-quotes' ) . '</h2><div class="note-box">' . nl2br( esc_html( $notes ) ) . '</div>' : '' ) . '
                     
-                    <p style="margin-top:30px;">Pronto recibirás una notificación con la respuesta a tu cotización.</p>
+                    <p style="margin-top:30px;">' . esc_html__( 'You will receive a notification shortly with the response to your quote.', 'wc-bookings-quotes' ) . '</p>
                 </div>
                 <div class="footer">
                     <p>&copy; ' . date('Y') . ' ' . get_bloginfo( 'name' ) . '.</p>

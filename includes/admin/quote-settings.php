@@ -4,37 +4,37 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * 1. Agregar submenú de ajustes
+ * 1. Add settings submenu
  */
 add_action( 'admin_menu', 'wcbq_add_settings_page' );
 
 function wcbq_add_settings_page() {
     add_submenu_page(
-        'edit.php?post_type=quote_request', // Padre: Cotizaciones
-        'Configuración de Correos',         // Título Página
-        'Ajustes de Correo',                // Título Menú
-        'manage_options',                   // Capacidad
+        'edit.php?post_type=quote_request', // Parent: Quotes
+        __( 'Email Configuration', 'wc-bookings-quotes' ), // Page Title
+        __( 'Email Settings', 'wc-bookings-quotes' ),      // Menu Title
+        'manage_options',                   // Capability
         'wcbq-email-settings',              // Slug
-        'wcbq_render_settings_page'         // Función Callback
+        'wcbq_render_settings_page'         // Callback Function
     );
 }
 
 /**
- * 2. Registrar las opciones (Settings API)
+ * 2. Register options (Settings API)
  */
 add_action( 'admin_init', 'wcbq_register_settings' );
 
 function wcbq_register_settings() {
-    // Grupo: Notificaciones Admin
+    // Group: Admin Notifications
     register_setting( 'wcbq_email_options', 'wcbq_email_admin_subject' );
     register_setting( 'wcbq_email_options', 'wcbq_email_admin_heading' );
 
-    // Grupo: Confirmación Cliente
+    // Group: Customer Confirmation
     register_setting( 'wcbq_email_options', 'wcbq_email_customer_received_subject' );
     register_setting( 'wcbq_email_options', 'wcbq_email_customer_received_heading' );
     register_setting( 'wcbq_email_options', 'wcbq_email_customer_received_intro' );
 
-    // Grupo: Estados (Aprobado, Rechazado, etc)
+    // Group: Statuses (Approved, Rejected, etc)
     $statuses = array('approved', 'review', 'rejected', 'pending');
     foreach($statuses as $st) {
         register_setting( 'wcbq_email_options', 'wcbq_email_' . $st . '_subject' );
@@ -43,84 +43,84 @@ function wcbq_register_settings() {
 }
 
 /**
- * 3. Renderizar la página HTML
+ * 3. Render HTML page
  */
 function wcbq_render_settings_page() {
     ?>
     <div class="wrap">
-        <h1>📧 Configuración de Plantillas de Correo</h1>
-        <p>Edita los textos de los correos automáticos. Deja los campos vacíos para usar los valores por defecto.</p>
+        <h1><?php esc_html_e( '📧 Email Template Settings', 'wc-bookings-quotes' ); ?></h1>
+        <p><?php esc_html_e( 'Edit the automatic email texts. Leave fields empty to use default values.', 'wc-bookings-quotes' ); ?></p>
         
         <form method="post" action="options.php">
             <?php settings_fields( 'wcbq_email_options' ); ?>
             <?php do_settings_sections( 'wcbq_email_options' ); ?>
 
             <hr>
-            <h2>1. Notificación al Administrador (Nueva Solicitud)</h2>
+            <h2><?php esc_html_e( '1. Admin Notification (New Request)', 'wc-bookings-quotes' ); ?></h2>
             <table class="form-table">
                 <tr>
-                    <th scope="row">Asunto del Correo</th>
-                    <td><input type="text" name="wcbq_email_admin_subject" value="<?php echo esc_attr( get_option('wcbq_email_admin_subject') ); ?>" class="regular-text" placeholder="Por defecto: ✦ NUEVA SOLICITUD DE COTIZACIÓN"></td>
+                    <th scope="row"><?php esc_html_e( 'Email Subject', 'wc-bookings-quotes' ); ?></th>
+                    <td><input type="text" name="wcbq_email_admin_subject" value="<?php echo esc_attr( get_option('wcbq_email_admin_subject') ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Default: ✦ NEW QUOTE REQUEST', 'wc-bookings-quotes' ); ?>"></td>
                 </tr>
                 <tr>
-                    <th scope="row">Título Principal (H1)</th>
-                    <td><input type="text" name="wcbq_email_admin_heading" value="<?php echo esc_attr( get_option('wcbq_email_admin_heading') ); ?>" class="regular-text" placeholder="Por defecto: NUEVA SOLICITUD"></td>
+                    <th scope="row"><?php esc_html_e( 'Main Title (H1)', 'wc-bookings-quotes' ); ?></th>
+                    <td><input type="text" name="wcbq_email_admin_heading" value="<?php echo esc_attr( get_option('wcbq_email_admin_heading') ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Default: NEW REQUEST', 'wc-bookings-quotes' ); ?>"></td>
                 </tr>
             </table>
 
             <hr>
-            <h2>2. Confirmación al Cliente (Recibido)</h2>
+            <h2><?php esc_html_e( '2. Customer Confirmation (Received)', 'wc-bookings-quotes' ); ?></h2>
             <table class="form-table">
                 <tr>
-                    <th scope="row">Asunto del Correo</th>
-                    <td><input type="text" name="wcbq_email_customer_received_subject" value="<?php echo esc_attr( get_option('wcbq_email_customer_received_subject') ); ?>" class="regular-text" placeholder="Por defecto: ✦ SOLICITUD RECIBIDA"></td>
+                    <th scope="row"><?php esc_html_e( 'Email Subject', 'wc-bookings-quotes' ); ?></th>
+                    <td><input type="text" name="wcbq_email_customer_received_subject" value="<?php echo esc_attr( get_option('wcbq_email_customer_received_subject') ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Default: ✦ REQUEST RECEIVED', 'wc-bookings-quotes' ); ?>"></td>
                 </tr>
                 <tr>
-                    <th scope="row">Título Principal (H1)</th>
-                    <td><input type="text" name="wcbq_email_customer_received_heading" value="<?php echo esc_attr( get_option('wcbq_email_customer_received_heading') ); ?>" class="regular-text" placeholder="Por defecto: SOLICITUD RECIBIDA"></td>
+                    <th scope="row"><?php esc_html_e( 'Main Title (H1)', 'wc-bookings-quotes' ); ?></th>
+                    <td><input type="text" name="wcbq_email_customer_received_heading" value="<?php echo esc_attr( get_option('wcbq_email_customer_received_heading') ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Default: REQUEST RECEIVED', 'wc-bookings-quotes' ); ?>"></td>
                 </tr>
                 <tr>
-                    <th scope="row">Texto Introductorio</th>
-                    <td><textarea name="wcbq_email_customer_received_intro" rows="3" class="large-text" placeholder="Gracias por contactarnos. Hemos recibido tu solicitud..."><?php echo esc_textarea( get_option('wcbq_email_customer_received_intro') ); ?></textarea></td>
+                    <th scope="row"><?php esc_html_e( 'Introductory Text', 'wc-bookings-quotes' ); ?></th>
+                    <td><textarea name="wcbq_email_customer_received_intro" rows="3" class="large-text" placeholder="<?php esc_attr_e( 'Thank you for contacting us. We have received your request...', 'wc-bookings-quotes' ); ?>"><?php echo esc_textarea( get_option('wcbq_email_customer_received_intro') ); ?></textarea></td>
                 </tr>
             </table>
 
             <hr>
-            <h2>3. Actualizaciones de Estado (Cliente)</h2>
+            <h2><?php esc_html_e( '3. Status Updates (Customer)', 'wc-bookings-quotes' ); ?></h2>
             
-            <h3 style="background:#e8f5e9; padding:10px;">✅ Cotización Aprobada</h3>
+            <h3 style="background:#e8f5e9; padding:10px;"><?php esc_html_e( '✅ Quote Approved', 'wc-bookings-quotes' ); ?></h3>
             <table class="form-table">
                 <tr>
-                    <th scope="row">Asunto</th>
-                    <td><input type="text" name="wcbq_email_approved_subject" value="<?php echo esc_attr( get_option('wcbq_email_approved_subject') ); ?>" class="regular-text" placeholder="COTIZACIÓN APROBADA"></td>
+                    <th scope="row"><?php esc_html_e( 'Subject', 'wc-bookings-quotes' ); ?></th>
+                    <td><input type="text" name="wcbq_email_approved_subject" value="<?php echo esc_attr( get_option('wcbq_email_approved_subject') ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'QUOTE APPROVED', 'wc-bookings-quotes' ); ?>"></td>
                 </tr>
                 <tr>
-                    <th scope="row">Mensaje Intro</th>
-                    <td><textarea name="wcbq_email_approved_intro" rows="3" class="large-text" placeholder="Nos complace informarte que tu cotización ha sido aprobada..."><?php echo esc_textarea( get_option('wcbq_email_approved_intro') ); ?></textarea></td>
+                    <th scope="row"><?php esc_html_e( 'Intro Message', 'wc-bookings-quotes' ); ?></th>
+                    <td><textarea name="wcbq_email_approved_intro" rows="3" class="large-text" placeholder="<?php esc_attr_e( 'We are pleased to inform you that your quote has been approved...', 'wc-bookings-quotes' ); ?>"><?php echo esc_textarea( get_option('wcbq_email_approved_intro') ); ?></textarea></td>
                 </tr>
             </table>
 
-            <h3 style="background:#e3f2fd; padding:10px;">En Revisión</h3>
+            <h3 style="background:#e3f2fd; padding:10px;"><?php esc_html_e( 'Under Review', 'wc-bookings-quotes' ); ?></h3>
             <table class="form-table">
                 <tr>
-                    <th scope="row">Asunto</th>
-                    <td><input type="text" name="wcbq_email_review_subject" value="<?php echo esc_attr( get_option('wcbq_email_review_subject') ); ?>" class="regular-text" placeholder="EN REVISIÓN"></td>
+                    <th scope="row"><?php esc_html_e( 'Subject', 'wc-bookings-quotes' ); ?></th>
+                    <td><input type="text" name="wcbq_email_review_subject" value="<?php echo esc_attr( get_option('wcbq_email_review_subject') ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'UNDER REVIEW', 'wc-bookings-quotes' ); ?>"></td>
                 </tr>
                 <tr>
-                    <th scope="row">Mensaje Intro</th>
-                    <td><textarea name="wcbq_email_review_intro" rows="3" class="large-text" placeholder="Tu solicitud está siendo revisada..."><?php echo esc_textarea( get_option('wcbq_email_review_intro') ); ?></textarea></td>
+                    <th scope="row"><?php esc_html_e( 'Intro Message', 'wc-bookings-quotes' ); ?></th>
+                    <td><textarea name="wcbq_email_review_intro" rows="3" class="large-text" placeholder="<?php esc_attr_e( 'Your request is being reviewed...', 'wc-bookings-quotes' ); ?>"><?php echo esc_textarea( get_option('wcbq_email_review_intro') ); ?></textarea></td>
                 </tr>
             </table>
 
-            <h3 style="background:#ffebee; padding:10px;">Rechazada</h3>
+            <h3 style="background:#ffebee; padding:10px;"><?php esc_html_e( 'Rejected', 'wc-bookings-quotes' ); ?></h3>
             <table class="form-table">
                 <tr>
-                    <th scope="row">Asunto</th>
-                    <td><input type="text" name="wcbq_email_rejected_subject" value="<?php echo esc_attr( get_option('wcbq_email_rejected_subject') ); ?>" class="regular-text" placeholder="SOLICITUD RECHAZADA"></td>
+                    <th scope="row"><?php esc_html_e( 'Subject', 'wc-bookings-quotes' ); ?></th>
+                    <td><input type="text" name="wcbq_email_rejected_subject" value="<?php echo esc_attr( get_option('wcbq_email_rejected_subject') ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'REQUEST REJECTED', 'wc-bookings-quotes' ); ?>"></td>
                 </tr>
                 <tr>
-                    <th scope="row">Mensaje Intro</th>
-                    <td><textarea name="wcbq_email_rejected_intro" rows="3" class="large-text" placeholder="Lamentamos informarte que no podemos proceder..."><?php echo esc_textarea( get_option('wcbq_email_rejected_intro') ); ?></textarea></td>
+                    <th scope="row"><?php esc_html_e( 'Intro Message', 'wc-bookings-quotes' ); ?></th>
+                    <td><textarea name="wcbq_email_rejected_intro" rows="3" class="large-text" placeholder="<?php esc_attr_e( 'We regret to inform you that we cannot proceed...', 'wc-bookings-quotes' ); ?>"><?php echo esc_textarea( get_option('wcbq_email_rejected_intro') ); ?></textarea></td>
                 </tr>
             </table>
 
