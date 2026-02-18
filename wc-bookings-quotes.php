@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WooCommerce Bookings – Quotes
  * Description: Sistema de cotización con pre-reservas para WooCommerce Bookings.
- * Version:     1.1.0
+ * Version:     2.0.0
  * Author:      Darwin Roa
  * Text Domain: wc-bookings-quotes
  * Domain Path: /languages
